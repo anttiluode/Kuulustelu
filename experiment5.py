@@ -13,7 +13,7 @@ from experiment4 import delta_stats
 
 HELD = range(2000, 2256)
 MS = (1, 2, 4, 8)
-PARTICLES = 4096
+PARTICLES = 8192   # round-5 deviation: mixture proposal, 8192 particles (v1: tag0 proposal, 4096)
 
 
 def main():
@@ -36,10 +36,12 @@ def main():
         R_t0, mu_t, S_t = r5.adf_decode_pop(s, bt, sig, m0)
         R_self = r5.adf_decode_pop(ss, bs, r4.SIGMA, m0)[0]
         trees = r5.trees_pop(s)
+        mus, Ss, lz = r5.branch_beliefs(s, trees)
         R_ex, ess = [], []
         for w, sd in enumerate(seeds):
             tw = [[tr[t][w] for t in range(r4.K)] for tr in trees]
-            mu, e = r4.importance_mean(sd, mu_t[w], S_t[w], lambda x: r5.tree_loglik_pop(x, s[w], tw), PARTICLES)
+            mu, e = r5.importance_mean_mixture(sd, mus[w], Ss[w], lz[w],
+                                               lambda x: r5.tree_loglik_pop(x, s[w], tw), PARTICLES)
             R_ex.append(r4.R_single(mu, m0[w])); ess.append(e)
         R_ex, ess = np.array(R_ex), np.array(ess)
         d = R_self - R_ex

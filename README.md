@@ -40,6 +40,7 @@ gate.
 | 2 | why the isotropic prior gave zero: revisiting and coupling | 6/6 passed | [RESULTS_2.md](RESULTS_2.md), [PROTOCOL_2.md](PROTOCOL_2.md) |
 | 3 | does a learned receiver find the conversation? | 3/4 passed; the graded control **failed** (diagnosed, not rescued) | [RESULTS_3.md](RESULTS_3.md), [PROTOCOL_3.md](PROTOCOL_3.md) |
 | 4 | who needs to know the question; does a shared slow field help ask it? | 10/12 passed; the shared-field kill gate **failed** (8.2% vs a 10% bar) | [RESULTS_4.md](RESULTS_4.md), [PROTOCOL_4.md](PROTOCOL_4.md) |
+| 5 | can a far reader recover the label from a population? | 1/3 passed; the kill gate **failed**: identical senders do not reveal the shared shift | [RESULTS_5.md](RESULTS_5.md), [PROTOCOL_5.md](PROTOCOL_5.md) |
 
 ## Why
 
@@ -153,6 +154,15 @@ bound for a physical field.
 - The graded soma gives identical results in every arm, as the round 1 equation
   says it must.
 
+**C. A population of identical senders does not recover the label (round 5).**
+Eight field-driven senders reading the same memory through the same gates still
+leave the best unlabeled reader about 10× worse than one that knows the
+thresholds (0.387 vs 0.038). A wrong guess about the shared shift, paired with a
+shifted memory, explains their bits almost as well, and identical senders cannot
+break that trade-off. Heterogeneous senders are untested. Shared rhythm, by
+derivation: phase-locking value PLV acts as a tag with R² = PLV², so it needs
+PLV above about 0.87 to help a far reader.
+
 ## What the controls say
 
 - **It is the threshold, not the gate.** Let the adaptive receiver choose the gate
@@ -228,6 +238,7 @@ python learned_experiment.py  # ~12 min, round 3: learned receivers
 python analyse_protocol3.py   # round 3 post-hoc diagnostics
 python experiment4.py         # ~6 min, round 4: question label and shared field
 python analyse_protocol4.py   # round 4 post-hoc diagnostics
+python experiment5.py         # ~30 min, round 5: population reader
 python make_figure.py && python make_figure2.py && python make_figure3.py && python make_figure4.py
 ```
 

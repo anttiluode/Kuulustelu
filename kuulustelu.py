@@ -164,6 +164,8 @@ def run(policy, soma, eta, sigma, prior, seeds, K, schedule=None, train=False):
     R = np.zeros((W, K + 1))
     Rpred = np.zeros((W, K + 1))
     chosen = np.zeros((W, K), dtype=int)
+    asked = np.zeros((W, K, n))   # effective gate on m0 for each read
+    heard = np.zeros((W, K))      # graded value or spike sign
     built = []
 
     def score_R():
@@ -197,13 +199,17 @@ def run(policy, soma, eta, sigma, prior, seeds, K, schedule=None, train=False):
             gt = Gt[w, a[w]]
             b = AB[a[w]]
             val = gt @ m0[w] + b + sigma * noise[w, t]
+            asked[w, t] = gt
             if soma == 'graded':
+                heard[w, t] = val
                 mu[w], S[w] = kalman_update(mu[w], S[w], gt, b, val, sigma)
             else:
                 s = 1.0 if val > 0 else -1.0
+                heard[w, t] = s
                 mu[w], S[w] = probit_update(mu[w], S[w], gt, b, s, sigma)
             g = AG[a[w]]
             M[w] = M[w] - eta * np.outer(g, g @ M[w])
         R[:, t + 1], Rpred[:, t + 1] = score_R(), predicted_R()
     return {'R': R, 'R_predicted': Rpred, 'actions': chosen, 'schedule': built,
+            'asked': asked, 'heard': heard, 'bias': AB[chosen], 'm0': m0,
             'gate': gid[chosen], 'bias_index': bidx[chosen]}

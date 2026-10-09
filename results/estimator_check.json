@@ -1,0 +1,26 @@
+{
+ "worlds": 128,
+ "samples": 400000,
+ "K": 8,
+ "config": "traces|spiking|eta=0.0|sigma=0.03",
+ "adaptive": {
+  "R_adf": 0.0545933237899262,
+  "R_exact_posterior": 0.034615718271995465,
+  "ess_median": 4982.914222517742,
+  "ess_min": 1075.3206887636231
+ },
+ "open": {
+  "R_adf": 0.15219162754781806,
+  "R_exact_posterior": 0.13026032056628944,
+  "ess_median": 43295.303014222634,
+  "ess_min": 4203.522722187919
+ },
+ "random": {
+  "R_adf": 0.19227234851721456,
+  "R_exact_posterior": 0.18214439929963838,
+  "ess_median": 88002.75624994136,
+  "ess_min": 5395.971426415884
+ },
+ "gap_fraction_adf": 0.6412856300339309,
+ "gap_fraction_exact": 0.7342573845856648
+}

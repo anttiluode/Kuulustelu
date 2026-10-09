@@ -39,9 +39,11 @@ requires.
 
 ## What survived
 
-1. **With a graded soma, remembering answers is worthless.** This is the Kalman
-   covariance recursion, now observed: 18/18 configurations, 512/512 worlds each,
-   identical questions. It holds with destructive reads too. Order matters there,
+1. **With a graded soma, remembering answers is worthless for choosing the next
+   question.** The answers are still essential for *estimating* the memory; they
+   just never change which question is best. This is the Kalman covariance
+   recursion, now observed: 18/18 configurations, 512/512 worlds each, identical
+   questions. It holds with destructive reads too. Order matters there,
    but the best order is still computable in advance.
 
 2. **With a spiking soma, remembering answers cuts error by about two-thirds.**
@@ -54,8 +56,10 @@ requires.
    fixed schedule (0.331 vs 0.122) and stalls near 0.33. The open-loop schedule
    survives because it spreads a fixed ladder of thresholds (bias indices
    10, 7, 13, 10, 9, 5, 15, 8 of 21). The adaptive policy's thresholds cluster at
-   the current posterior mean. That is probabilistic bisection (Horstein 1963),
-   arriving on its own from the expected-variance rule.
+   the current posterior mean. That is probabilistic bisection (Horstein 1963).
+   It is not coded explicitly, but it follows directly from the programmed
+   expected-variance rule, so it is a consequence of that rule rather than a
+   discovery by the policy.
 
 4. **The conversation needs coupling between questions.** Exploratory prediction
    **failed**: with an isotropic prior the spiking gap is exactly zero, identical
@@ -65,16 +69,28 @@ requires.
    one direction moves the right threshold for the next, through correlation or
    by asking the same direction again. Real branch traces are strongly coupled
    because they share one history (one direction carries 94.2% of the variance),
-   and that is where the gap lives.
+   and that is where the gap lives. *This explanation was written after seeing
+   the result. [Protocol 2](RESULTS_2.md) then tested it on predictions it was not
+   fitted to, and both routes held: revisiting (the isotropic gap opens at
+   exactly K = 13) and coupling (the gap rises steadily from 0% to 69% as
+   coupling increases).*
 
 5. **Noise and destruction interact.** At low noise, destructive reads barely
    matter (gap 68.7% → 65.2%); the memory is redundant, so the same direction can
    be reached through other gates. At high noise, re-asking is how noise gets
    averaged, and a read that erases what it read removes that option: the gap
-   falls from 52.2% (η = 0) to 24.5% (η = 1).
+   falls from 52.2% (η = 0) to 24.5% (η = 1). **Withdrawn as an interpretation
+   (protocol 2):** measured as reads saved instead of error at K = 8, the
+   adaptive policy still matches the fixed schedule's 8-read error in 3.8 reads
+   at η = 1, σ = 0.3, against 3.0 at η = 0. The fixed schedule's curve flattens
+   at high noise, so the error ratio shrinks without the saving in reads
+   shrinking. G5's pass stands as frozen; the stronger reading depends on the
+   metric.
 
 6. **Cost of one bit.** At K = 8 the graded soma reaches R = 0.0016. The spiking
    soma reaches 0.0381 with conversation and 0.1216 without — 24× and 76× worse.
+   The spike is not more accurate per read. Adaptive questioning recovers part
+   of what one-bit communication loses.
 
 ## Estimator check (post hoc, added after the held-out run — not a gate)
 
@@ -82,10 +98,12 @@ The spiking receiver uses an approximate (ADF) posterior. On held-out worlds it
 is overconfident: it predicts R = 0.0191 for the adaptive policy (actual 0.0381)
 and 0.0916 for open-loop (actual 0.1216). To check that the gap is about the
 information collected, not the estimator, `check_estimator.py` re-scores the same
-reads on 128 held-out worlds with the exact posterior mean by importance sampling
-(400,000 prior samples; minimum effective sample size 1,075):
+reads on 128 held-out worlds with a Monte Carlo estimate of the true posterior
+mean, by importance sampling from the prior (400,000 samples; minimum effective
+sample size 1,075). It is not an analytical calculation, and covers 128 of the
+512 worlds.
 
-| | ADF receiver | exact posterior |
+| | ADF receiver | importance-sampled posterior |
 |---|---|---|
 | adaptive | 0.0546 | 0.0346 |
 | open-loop | 0.1522 | 0.1303 |
@@ -93,7 +111,7 @@ reads on 128 held-out worlds with the exact posterior mean by importance samplin
 | gap vs open-loop | 64.1% | **73.4%** |
 
 The approximation was costing the adaptive policy more than the fixed schedule.
-With the exact posterior the gap is larger, not smaller.
+With the better posterior the gap is larger, not smaller.
 
 ## Deviations from the protocol, all recorded
 

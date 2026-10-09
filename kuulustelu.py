@@ -37,7 +37,20 @@ def prior_cov(prior='traces'):
         return S
     if prior == 'iso':
         return np.eye(BRANCHES) * np.trace(S) / BRANCHES
-    raise ValueError('prior must be traces or iso')
+    alpha = mix_alpha(prior)
+    if alpha is not None:
+        return alpha * S + (1 - alpha) * np.eye(BRANCHES) * np.trace(S) / BRANCHES
+    raise ValueError('prior must be traces, iso or mix:<alpha>')
+
+
+def mix_alpha(prior):
+    """'mix:0.5' -> 0.5; anything else -> None."""
+    if isinstance(prior, str) and prior.startswith('mix:'):
+        alpha = float(prior[4:])
+        if not 0 <= alpha <= 1:
+            raise ValueError('mix alpha must be in [0, 1]')
+        return alpha
+    return None
 
 
 def gate_catalog():
@@ -72,11 +85,18 @@ def worlds(seeds, prior, K):
     """Hidden memories and per-step noise; identical across policies (paired)."""
     S0 = prior_cov(prior)
     F = trace_filter()
+    alpha = mix_alpha(prior)
+    c = np.trace(F @ F.T) / BRANCHES
     m0, noise, rnd = [], [], []
     for s in seeds:
         r = np.random.default_rng([int(s), 1])
         if prior == 'traces':
             m0.append(F @ r.normal(size=HISTORY))
+        elif alpha is not None:
+            # h shares round 1's trace stream, so mix:1 reproduces 'traces' exactly
+            h = r.normal(size=HISTORY)
+            z = np.random.default_rng([int(s), 4]).normal(size=BRANCHES)
+            m0.append(np.sqrt(alpha) * (F @ h) + np.sqrt((1 - alpha) * c) * z)
         else:
             m0.append(np.sqrt(S0[0, 0]) * r.normal(size=BRANCHES))
         noise.append(np.random.default_rng([int(s), 2]).normal(size=K))

@@ -88,6 +88,26 @@ class TestReceiver(unittest.TestCase):
             self.assertAlmostEqual(red_g[a], Sg @ Sg / (G[a] @ Sg + sigma ** 2), places=12)
 
 
+class TestMixedPrior(unittest.TestCase):
+    def test_mix_one_reproduces_traces_exactly(self):
+        np.testing.assert_array_equal(k.prior_cov('mix:1.0'), k.prior_cov('traces'))
+        a, _, _ = k.worlds(range(2000, 2010), 'mix:1.0', 4)
+        b, _, _ = k.worlds(range(2000, 2010), 'traces', 4)
+        np.testing.assert_array_equal(a, b)
+
+    def test_mix_worlds_have_the_stated_covariance(self):
+        for alpha in (0.0, 0.5):
+            m0, _, _ = k.worlds(range(20000), f'mix:{alpha}', 1)
+            S = k.prior_cov(f'mix:{alpha}')
+            emp = m0.T @ m0 / len(m0)
+            self.assertLess(np.max(np.abs(emp - S)) / np.max(np.abs(S)), 0.05)
+
+    def test_noise_prefix_does_not_depend_on_budget(self):
+        _, n12, _ = k.worlds(range(2000, 2004), 'iso', 12)
+        _, n36, _ = k.worlds(range(2000, 2004), 'iso', 36)
+        np.testing.assert_array_equal(n12, n36[:, :12])
+
+
 class TestTieBreak(unittest.TestCase):
     def test_near_ties_resolve_to_lowest_index(self):
         s = np.array([[1.0, 1.0 + 1e-15, 0.5], [0.2, 0.9, 0.9 * (1 + 1e-14)]])

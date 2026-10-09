@@ -39,6 +39,7 @@ gate.
 | 1 | graded vs spiking soma, programmed receiver | 5/5 passed; one exploratory prediction failed | [RESULTS.md](RESULTS.md), [PROTOCOL.md](PROTOCOL.md) |
 | 2 | why the isotropic prior gave zero: revisiting and coupling | 6/6 passed | [RESULTS_2.md](RESULTS_2.md), [PROTOCOL_2.md](PROTOCOL_2.md) |
 | 3 | does a learned receiver find the conversation? | 3/4 passed; the graded control **failed** (diagnosed, not rescued) | [RESULTS_3.md](RESULTS_3.md), [PROTOCOL_3.md](PROTOCOL_3.md) |
+| 4 | who needs to know the question; does a shared slow field help ask it? | 10/12 passed; the shared-field kill gate **failed** (8.2% vs a 10% bar) | [RESULTS_4.md](RESULTS_4.md), [PROTOCOL_4.md](PROTOCOL_4.md) |
 
 ## Why
 
@@ -111,6 +112,47 @@ paired with an identical network whose questions are learned but fixed.
   (0.00075 vs 0.00091–0.00134). That is learning variance between suboptimal
   fixed schedules, not answers steering questions. The gate stays failed.
 
+## Who needs to know the question — and a shared field
+
+Round 4 asks two things that follow from "the value is in moving the threshold".
+
+![Question label and shared field](results/label_and_field.svg)
+
+**A. A bit is worth what its reader knows about the question.** Two cells read
+the same memory. One cell's threshold is centred using its neighbour's answers,
+delivered by a shared field. A distant reader sees only that cell's spikes.
+
+- If the threshold depends only on the cell's **own** spikes, the label is free.
+  Any reader that knows the rule replays every threshold exactly, and decodes as
+  well as an oracle (0.043).
+- If the threshold also depends on **neighbours'** spikes the reader never saw,
+  the same spikes are worth *less* than a fixed schedule's. The Bayes-optimal
+  reader, marginalising every possible neighbour sequence, gets 0.541 against the
+  fixed schedule's 0.122. A reader who knows the thresholds gets 0.038.
+- The reason is that a threshold that tracks the truth turns the bit into a near
+  coin flip about the value. The bit is informative only relative to the
+  threshold.
+- A waveform tag that reports the hidden threshold with R² = 0.05 (the order the
+  [waveform preprint](https://doi.org/10.64898/2026.09.15.751814) reports against
+  the LFP in vivo) recovers about 8% of what the full label is worth. Even at
+  R² = 0.7 the reader stays worse than a fixed schedule.
+
+**B. A shared slow field helps ask, a little.** Eight cells on a line, memories
+correlated by distance. Each cell centres its threshold on a belief that
+includes its neighbours' answers. That sharing is lossless, so it is an upper
+bound for a physical field.
+
+- The nearest-neighbour field beats private centring by 8.2% (p = 4e-5) and gets
+  97% of what full broadcast gets, with a quarter of the links.
+- Wrong geometry gets nothing (0.6%). In a world whose correlations do not follow
+  position, wired coupling to the most-correlated cells beats the field (9.2% vs
+  4.2% over private).
+- **The pre-registered kill gate failed.** I set 10% and the field reached 8.2%.
+  The ceiling is the cause: even broadcast gets only 8.5%, because each cell's own
+  answers do most of the centring within two or three reads.
+- The graded soma gives identical results in every arm, as the round 1 equation
+  says it must.
+
 ## What the controls say
 
 - **It is the threshold, not the gate.** Let the adaptive receiver choose the gate
@@ -162,7 +204,9 @@ threshold read here.
 
 Rounds 1–2 use programmed, greedy, Bayesian policies with a known prior and
 forward model. Round 3's learned receivers are small networks trained on the true
-prior, with three initialisations per arm. The spiking soma is a probit threshold on a linear sum, not a
+prior, with three initialisations per arm. Round 4's "field" is lossless sharing of
+neighbours' answers within a radius and its waveform tag is synthetic Gaussian;
+neither models membrane, pump or ion dynamics. The spiking soma is a probit threshold on a linear sum, not a
 spike waveform. The per-read bias assumes the cell's excitability can be set for
 each question. The headline prior is close to one-dimensional, which favours
 bisection (round 2 shows how the gap falls as that is relaxed). Reads are equal in
@@ -182,7 +226,9 @@ python check_estimator.py     # ~1 min, importance-sampled re-scoring
 python experiment2.py         # ~45 s, round 2: revisiting and coupling
 python learned_experiment.py  # ~12 min, round 3: learned receivers
 python analyse_protocol3.py   # round 3 post-hoc diagnostics
-python make_figure.py && python make_figure2.py && python make_figure3.py
+python experiment4.py         # ~6 min, round 4: question label and shared field
+python analyse_protocol4.py   # round 4 post-hoc diagnostics
+python make_figure.py && python make_figure2.py && python make_figure3.py && python make_figure4.py
 ```
 
 NumPy, SciPy, Matplotlib, autograd. Results regenerate byte-identically,

@@ -14,6 +14,12 @@ TAGS = (0.0, 0.05, 0.3, 0.7)
 PARTICLES = 8192
 
 
+def round1_open():
+    """Round 1's held-out open-loop R at K = 8 (spiking, sigma 0.03, eta 0)."""
+    with open('results/summary.json') as f:
+        return json.load(f)['results']['traces|spiking|eta=0.0|sigma=0.03']['K8']['open']
+
+
 def one_sided(a, b):
     """p for a < b (paired)."""
     d = b - a
@@ -124,7 +130,7 @@ def part_A(train, held, particles):
     seq = [K8[f'field|tag{r}'] for r in TAGS] + [K8['field|oracle']]
     out['gates'] = {
         'A1_label_free_for_self_driven': out['replay_max_abs_err_self'] <= 1e-12 and out['naive_minus_oracle_self_max'] == 0.0,
-        'A2_replicates_round1_open': abs(K8['open|oracle'] - 0.12163) < 5e-5,
+        'A2_replicates_round1_open': abs(K8['open|oracle'] - round1_open()) <= 1e-12,
         'A3_threshold_only_adaptation': K8['self|oracle'] <= .85 * K8['open|oracle'] and st['self_vs_open_p'] < 1e-3,
         'A4_unlabeled_no_better_than_open': out['exact']['8']['R_unlabeled'] >= K8['open|oracle'],
         'A5_noise_reader_loses_to_open': K8['field|tag0.0'] > K8['open|oracle'] and st['tag0_gt_open_p'] < 1e-3,

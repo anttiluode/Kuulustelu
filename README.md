@@ -29,10 +29,16 @@ Across every spiking configuration tested it needs 2.6–4.0 reads to do so.
 The spike is not more accurate per read: a graded soma reaches 0.0016 in 8 reads.
 The conversation recovers part of what one-bit communication loses.
 
-Round 1: five pre-registered gates, all passed; one exploratory prediction failed
-([RESULTS.md](RESULTS.md), [PROTOCOL.md](PROTOCOL.md)). Round 2 tested the
-after-the-fact explanation of that failure on new predictions: six gates, all
-passed ([RESULTS_2.md](RESULTS_2.md), [PROTOCOL_2.md](PROTOCOL_2.md)).
+A receiver **trained only to predict**, with no Bayesian rule, learns the same
+conversation. It cuts error by 53–78% against an identical network whose
+questions are fixed, and it does so by moving the threshold rather than the
+gate.
+
+| round | question | gates | ledger |
+|---|---|---|---|
+| 1 | graded vs spiking soma, programmed receiver | 5/5 passed; one exploratory prediction failed | [RESULTS.md](RESULTS.md), [PROTOCOL.md](PROTOCOL.md) |
+| 2 | why the isotropic prior gave zero: revisiting and coupling | 6/6 passed | [RESULTS_2.md](RESULTS_2.md), [PROTOCOL_2.md](PROTOCOL_2.md) |
+| 3 | does a learned receiver find the conversation? | 3/4 passed; the graded control **failed** (diagnosed, not rescued) | [RESULTS_3.md](RESULTS_3.md), [PROTOCOL_3.md](PROTOCOL_3.md) |
 
 ## Why
 
@@ -76,6 +82,34 @@ next threshold should sit. There are two ways that happens:
 
 Round 1 first gave this two-route explanation after seeing the isotropic zero.
 Round 2 pre-registered both routes as predictions, and both held.
+
+## A learned receiver finds it too
+
+The receivers above follow a programmed rule, so their threshold-centring is a
+consequence of that rule. Round 3 replaces them with small recurrent networks
+trained only to minimise prediction error. They have no prior, no posterior and
+no threshold rule, and can ask any gate and any bias. Each adaptive network is
+paired with an identical network whose questions are learned but fixed.
+
+![Learned receivers](results/learned_receivers.svg)
+
+- **Spiking soma:** the adaptive network beats its fixed twin in all three
+  initialisations, by 53%, 78% and 77% (p ≤ 7e-34).
+- **Same mechanism, unprompted.** The learned adaptive receivers keep asking
+  nearly the same branches in every world and move the *threshold* with what
+  they heard. Their median |z| is 0.18–0.57, against 0.99–1.25 for the fixed
+  networks. Two of three clear the frozen centring gate.
+- **Better questions than the programmed rule, uncontrolled.** Two of three
+  learned receivers beat round 1's programmed adaptive receiver (0.020, 0.026
+  vs 0.038), even when their reads are decoded by round 1's own Bayesian
+  receiver. They also have continuous gates and are trained over all 8 reads
+  rather than greedily, and this round doesn't separate those causes.
+- **The graded control failed its frozen gate.** Gaps of −11%, +17% and +16%
+  against a ±15% band. Post-hoc diagnosis: the graded adaptive networks learned
+  a fixed schedule (their gate directions barely vary across worlds), and every
+  learned graded network, adaptive or not, is beaten by the best fixed schedule
+  (0.00075 vs 0.00091–0.00134). That is learning variance between suboptimal
+  fixed schedules, not answers steering questions. The gate stays failed.
 
 ## What the controls say
 
@@ -126,8 +160,9 @@ threshold read here.
 
 ## Limits
 
-Programmed, greedy, Bayesian policies with a known prior and forward model;
-nothing is learned. The spiking soma is a probit threshold on a linear sum, not a
+Rounds 1–2 use programmed, greedy, Bayesian policies with a known prior and
+forward model. Round 3's learned receivers are small networks trained on the true
+prior, with three initialisations per arm. The spiking soma is a probit threshold on a linear sum, not a
 spike waveform. The per-read bias assumes the cell's excitability can be set for
 each question. The headline prior is close to one-dimensional, which favours
 bisection (round 2 shows how the gap falls as that is relaxed). Reads are equal in
@@ -145,7 +180,10 @@ python -m unittest discover -s tests -t . -v
 python experiment.py          # ~3 min, round 1: 36 configurations, gates G1–G5
 python check_estimator.py     # ~1 min, importance-sampled re-scoring
 python experiment2.py         # ~45 s, round 2: revisiting and coupling
-python make_figure.py && python make_figure2.py
+python learned_experiment.py  # ~12 min, round 3: learned receivers
+python analyse_protocol3.py   # round 3 post-hoc diagnostics
+python make_figure.py && python make_figure2.py && python make_figure3.py
 ```
 
-NumPy, SciPy, Matplotlib. Results regenerate byte-identically.
+NumPy, SciPy, Matplotlib, autograd. Results regenerate byte-identically,
+including the trained networks.
